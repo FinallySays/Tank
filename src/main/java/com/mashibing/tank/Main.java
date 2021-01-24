@@ -14,5 +14,15 @@ import java.util.concurrent.TimeUnit;
 public class Main {
     public static void main(String[] args) throws InterruptedException {
         TankFrame tankFrame = new TankFrame();
+        for (int i = 0; i < PropertiesManager.getInstance().getInt("initialCount"); i++) {
+            Tank tank = new Tank(50 + i * 10, 100, Direction.DOWN, tankFrame, Group.BAD);
+            tank.setMoving(true);
+            tankFrame.tanks.add(tank);
+
+        }
+        while (true) {
+            Thread.sleep(50);
+            tankFrame.repaint();
+        }
     }
 }

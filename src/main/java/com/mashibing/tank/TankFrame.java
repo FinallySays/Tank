@@ -5,6 +5,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Author : shiwp
@@ -14,10 +16,14 @@ import java.awt.event.WindowEvent;
  */
 public class TankFrame extends Frame {
 
-    int x = 200, y = 200;
+    Tank myTank = new Tank(600, 200, Direction.DOWN, this, Group.GOOD);
+    List<Bullet> bullets = new ArrayList<>();
+    List<Tank> tanks = new ArrayList<>();
+    List<Explode> explodes = new ArrayList<>();
+    static final int WINDOE_WIDTH = 800, WINDOW_HEIGHT = 600;
 
     public TankFrame() {
-        setSize(800, 600);
+        setSize(WINDOE_WIDTH, WINDOW_HEIGHT);
         setResizable(false);
         setTitle("tank war");
         setVisible(true);
@@ -32,10 +38,44 @@ public class TankFrame extends Frame {
         });
     }
 
+    Image offScreenImage = null;
+
+    @Override
+    public void update(Graphics g) {
+        if (offScreenImage == null) {
+            offScreenImage = this.createImage(WINDOE_WIDTH, WINDOW_HEIGHT);
+        }
+
+        Graphics gOffScreen = offScreenImage.getGraphics();
+        Color c = gOffScreen.getColor();
+        gOffScreen.setColor(Color.BLACK);
+        gOffScreen.fillRect(0, 0, WINDOE_WIDTH, WINDOW_HEIGHT);
+        gOffScreen.setColor(c);
+        paint(gOffScreen);
+        g.drawImage(offScreenImage, 0, 0, null);
+    }
+
     @Override
     public void paint(Graphics g) {
-        g.fillRect(x, y, 50, 50);
-//        x += 10;
+
+        myTank.paint(g);
+        for (int i = 0; i < bullets.size(); ++i) {
+            bullets.get(i).paint(g);
+        }
+        for (int i = 0; i < tanks.size(); i++) {
+            tanks.get(i).paint(g);
+        }
+        for (int i = 0; i < explodes.size(); i++) {
+            explodes.get(i).paint(g);
+        }
+        for (int i = 0; i < bullets.size(); i++) {
+            for (int j = 0; j < tanks.size(); j++) {
+                if (bullets.get(i).getGroup() == tanks.get(j).getGroup()) {
+                    continue;
+                }
+                bullets.get(i).collideWith(tanks.get(j));
+            }
+        }
     }
 
     class MykeyListener extends KeyAdapter {
@@ -62,10 +102,8 @@ public class TankFrame extends Frame {
                     bu = true;
                     break;
             }
-            x = x + (bl ? -10 : 0) + (br ? 10 : 0);
-            y = y + (bu ? -10 : 0) + (bd ? 10 : 0);
+            setMainTankDir();
             repaint();
-
         }
 
         @Override
@@ -84,7 +122,29 @@ public class TankFrame extends Frame {
                 case KeyEvent.VK_UP:
                     bu = false;
                     break;
+                case KeyEvent.VK_SPACE :
+                    myTank.fire();
+                    break;
+                case KeyEvent.VK_CONTROL :
+                    myTank.changeBullet();
+                    break;
+            }
+            setMainTankDir();
+        }
+
+
+        private void setMainTankDir() {
+            if (!(bl || br || bu || bd)) {
+                myTank.setMoving(false);
+            } else {
+                myTank.setMoving(true);
+                if (bl) myTank.setDir(Direction.LEFT);
+                if (br) myTank.setDir(Direction.RIGHT);
+                if (bu) myTank.setDir(Direction.UP);
+                if (bd) myTank.setDir(Direction.DOWN);
             }
         }
     }
+
+
 }
